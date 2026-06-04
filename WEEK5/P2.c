@@ -1,31 +1,55 @@
 #include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
 
 #define N 5
 
-void dining(int ph)
+sem_t fork_sem[N];
+sem_t mutex;
+
+void *philosopher(void *arg)
 {
-    printf("\nPhilosopher %d is Thinking", ph);
+    int id = *(int *)arg;
 
-    printf("\nPhilosopher %d takes Fork %d and Fork %d",
-           ph, ph, (ph + 1) % N);
+    while (1)
+    {
+        printf("Philosopher %d is Thinking\n", id);
+        sleep(1);
 
-    printf("\nPhilosopher %d is Eating", ph);
+        sem_wait(&mutex);
 
-    printf("\nPhilosopher %d puts down Fork %d and Fork %d\n",
-           ph, ph, (ph + 1) % N);
+        sem_wait(&fork_sem[id]);           // Left Fork
+        sem_wait(&fork_sem[(id + 1) % N]); // Right Fork
+
+        printf("Philosopher %d is Eating\n", id);
+        sleep(2);
+
+        sem_post(&fork_sem[id]);
+        sem_post(&fork_sem[(id + 1) % N]);
+
+        sem_post(&mutex);
+    }
 }
 
 int main()
 {
-    int ph;
+    pthread_t p[N];
+    int id[N];
 
-    printf("Enter Philosopher Number (0-4): ");
-    scanf("%d", &ph);
+    sem_init(&mutex, 0, 1);
 
-    if(ph >= 0 && ph < N)
-        dining(ph);
-    else
-        printf("Invalid Philosopher Number");
+    for (int i = 0; i < N; i++)
+        sem_init(&fork_sem[i], 0, 1);
+
+    for (int i = 0; i < N; i++)
+    {
+        id[i] = i;
+        pthread_create(&p[i], NULL, philosopher, &id[i]);
+    }
+
+    for (int i = 0; i < N; i++)
+        pthread_join(p[i], NULL);
 
     return 0;
 }
