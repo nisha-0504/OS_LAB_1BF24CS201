@@ -25,13 +25,23 @@ int main()
     printf("Enter Time Quantum: ");
     scanf("%d", &tq);
 
-    int queue[100], front = 0, rear = 0;
+    int queue[100];
     int visited[100] = {0};
+    int front = 0, rear = 0;
 
     int time = 0, completed = 0;
 
-    queue[rear++] = 0;
-    visited[0] = 1;
+    /* Find process with minimum arrival time */
+    int min = 0;
+    for(int i = 1; i < n; i++)
+    {
+        if(p[i].at < p[min].at)
+            min = i;
+    }
+
+    time = p[min].at;
+    queue[rear++] = min;
+    visited[min] = 1;
 
     while(completed < n)
     {
@@ -54,6 +64,7 @@ int main()
             completed++;
         }
 
+        /* Add newly arrived processes */
         for(int j = 0; j < n; j++)
         {
             if(!visited[j] && p[j].at <= time)
@@ -63,8 +74,11 @@ int main()
             }
         }
 
+        /* Put process back in queue if not completed */
         if(p[i].rt > 0)
+        {
             queue[rear++] = i;
+        }
     }
 
     float avgWT = 0, avgTAT = 0;
