@@ -33,7 +33,7 @@ int main()
 
     /* Find process with minimum arrival time */
     int min = 0;
-    for(int i = 1; i < n; i++)
+    for(int i = 0; i < n; i++)
     {
         if(p[i].at < p[min].at)
             min = i;
