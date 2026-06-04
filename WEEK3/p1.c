@@ -1,81 +1,92 @@
 #include <stdio.h>
-#define MAX 100
 
-int main() {
-    int n, q_count;
-    int at[MAX], bt[MAX], rt[MAX];
-    int ct[MAX], tat[MAX], wt[MAX];
-    int queue[MAX], visited[MAX];
-    int front, rear, time, completed;
+struct Process
+{
+    int at, bt, rt;
+    int ct, wt, tat;
+};
+
+int main()
+{
+    int n, tq;
+
     printf("Enter number of processes: ");
     scanf("%d", &n);
-    printf("Enter Arrival Time and Burst Time:\n");
-    for (int i = 0; i < n; i++) {
-        printf("P%d AT BT: ", i + 1);
-        scanf("%d %d", &at[i], &bt[i]);
+
+    struct Process p[n];
+
+    for(int i = 0; i < n; i++)
+    {
+        printf("Enter Arrival Time and Burst Time for P%d: ", i + 1);
+        scanf("%d %d", &p[i].at, &p[i].bt);
+        p[i].rt = p[i].bt;
     }
-    printf("\nEnter number of quantum values: ");
-    scanf("%d", &q_count);
-    int quantum[q_count];
-    printf("Enter quantum values:\n");
-    for (int i = 0; i < q_count; i++) {
-        scanf("%d", &quantum[i]);
-    }
-    for (int q = 0; q < q_count; q++) {
-        for (int i = 0; i < n; i++) {
-            rt[i] = bt[i];
-            visited[i] = 0;
+
+    printf("Enter Time Quantum: ");
+    scanf("%d", &tq);
+
+    int queue[100], front = 0, rear = 0;
+    int visited[100] = {0};
+
+    int time = 0, completed = 0;
+
+    queue[rear++] = 0;
+    visited[0] = 1;
+
+    while(completed < n)
+    {
+        int i = queue[front++];
+
+        if(p[i].rt > tq)
+        {
+            time += tq;
+            p[i].rt -= tq;
         }
-        front = rear = 0;
-        time = 0;
-        completed = 0;
-        queue[rear++] = 0;
-        visited[0] = 1;
-        while (completed < n) {
-            if (front == rear)
-                break;
-            int i = queue[front++];
-            if (rt[i] > quantum[q]) {
-                time += quantum[q];
-                rt[i] -= quantum[q];
-            }
-            else {
-                time += rt[i];
-                rt[i] = 0;
-                ct[i] = time;
-                completed++;
-            }
-            for (int j = 0; j < n; j++) {
-                if (!visited[j] && at[j] <= time) {
-                    queue[rear++] = j;
-                    visited[j] = 1;
-                }
-            }
-            if (rt[i] > 0)
-                queue[rear++] = i;
-            if (front == rear) {
-                for (int j = 0; j < n; j++) {
-                    if (rt[j] > 0) {
-                        queue[rear++] = j;
-                        visited[j] = 1;
-                        time = at[j];
-                        break;
-                    }
-                }
+        else
+        {
+            time += p[i].rt;
+            p[i].rt = 0;
+
+            p[i].ct = time;
+            p[i].tat = p[i].ct - p[i].at;
+            p[i].wt = p[i].tat - p[i].bt;
+
+            completed++;
+        }
+
+        for(int j = 0; j < n; j++)
+        {
+            if(!visited[j] && p[j].at <= time)
+            {
+                queue[rear++] = j;
+                visited[j] = 1;
             }
         }
-        float total_tat = 0, total_wt = 0;
-        printf("\nQuantum = %d\n", quantum[q]);
-        printf("PID\tAT\tBT\tCT\tTAT\tWT\n");
-        for (int i = 0; i < n; i++) {
-            tat[i] = ct[i] - at[i];
-            wt[i] = tat[i] - bt[i];
-            total_tat += tat[i];
-            total_wt += wt[i];
-            printf("P%d\t%d\t%d\t%d\t%d\t%d\n",i + 1, at[i], bt[i], ct[i], tat[i], wt[i]);
-        }
-        printf("Average TAT = %.2f\n", total_tat / n);
-        printf("Average WT  = %.2f\n", total_wt / n);
+
+        if(p[i].rt > 0)
+            queue[rear++] = i;
     }
+
+    float avgWT = 0, avgTAT = 0;
+
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+
+    for(int i = 0; i < n; i++)
+    {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
+               i + 1,
+               p[i].at,
+               p[i].bt,
+               p[i].ct,
+               p[i].tat,
+               p[i].wt);
+
+        avgWT += p[i].wt;
+        avgTAT += p[i].tat;
+    }
+
+    printf("\nAverage Waiting Time = %.2f", avgWT / n);
+    printf("\nAverage Turnaround Time = %.2f\n", avgTAT / n);
+
     return 0;
 }
